@@ -132,7 +132,7 @@ func (sshServer *sshd) handleConnection(nConn net.Conn) {
 	// net.Conn.
 	_, chans, reqs, err := ssh.NewServerConn(nConn, sshServer.config)
 	if err != nil {
-		sshdServer.bruteforce <- models.MakeBruteforceAttack(ip, "handshake", "handshake", false)
+		sshServer.bruteforce <- models.MakeBruteforceAttack(ip, "handshake", "handshake", false)
 		log.Error.Println(clientId, "Failed to handshake", err)
 		return
 	}
