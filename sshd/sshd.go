@@ -18,15 +18,26 @@ import (
 
 	"github.com/sec51/honeyssh/commands"
 	"github.com/sec51/honeyssh/log"
+	"github.com/sec51/honeyssh/models"
+	"github.com/sec51/honeyssh/processing"
 )
 
 type sshd struct {
-	config   *ssh.ServerConfig
-	host     string
-	port     string
-	hostname string
-	user     string
-	pass     string
+	config         *ssh.ServerConfig
+	host           string
+	port           string
+	hostname       string
+	user           string
+	pass           string
+	bruteforce     chan models.BruteforceAttack
+	commands       chan models.Command
+	dataProcessing processing.ProcessingService
+}
+
+type BruteforceAttack struct {
+	Ip       string
+	User     string
+	Password string
 }
 
 func (sshServer *sshd) Start() {
@@ -65,6 +76,13 @@ func (sshServer *sshd) Start() {
 func NewSSHServer(host, port, hostname, user, password string) *sshd {
 	sshdServer := new(sshd)
 
+	sshdServer.commands = make(chan models.Command)
+	sshdServer.bruteforce = make(chan models.BruteforceAttack)
+
+	// attach the data processing and start it
+	sshdServer.dataProcessing = processing.NewProcessingService(sshdServer.bruteforce, sshdServer.commands)
+	sshdServer.dataProcessing.Start()
+
 	if host == "" {
 		host = "0.0.0.0"
 	}
@@ -84,11 +102,16 @@ func NewSSHServer(host, port, hostname, user, password string) *sshd {
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 			// Should use constant-time compare (or better, salt+hash) in
 			// a production setting.
+			ip, _, _ := net.SplitHostPort(c.RemoteAddr().String())
+
 			if subtle.ConstantTimeCompare([]byte(c.User()), []byte(user)) == 1 && subtle.ConstantTimeCompare(pass, []byte(password)) == 1 {
+				sshdServer.bruteforce <- models.MakeBruteforceAttack(ip, c.User(), string(pass), true)
 				return nil, nil
 			}
 
+			sshdServer.bruteforce <- models.MakeBruteforceAttack(ip, c.User(), string(pass), false)
 			log.Error.Printf("%s: Password rejected for %q with password %s\n", c.RemoteAddr().String(), c.User(), string(pass))
+
 			return nil, fmt.Errorf("Password rejected for %q with password %s\n", c.User(), string(pass))
 		},
 	}
@@ -103,6 +126,7 @@ func (sshServer *sshd) handleConnection(nConn net.Conn) {
 
 	// get the client remote address
 	clientId := nConn.RemoteAddr().String()
+	ip, _, _ := net.SplitHostPort(clientId)
 
 	// Before use, a handshake must be performed on the incoming
 	// net.Conn.
@@ -241,6 +265,7 @@ func (sshServer *sshd) handleConnection(nConn net.Conn) {
 				line = strings.TrimSpace(line)
 
 				log.Info.Printf("%s: command: %s", clientId, line)
+				sshServer.commands <- models.MakeCommand(ip, line)
 
 				// exit the shell
 				if line == "exit" {
