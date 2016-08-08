@@ -132,7 +132,8 @@ func (sshServer *sshd) handleConnection(nConn net.Conn) {
 	// net.Conn.
 	_, chans, reqs, err := ssh.NewServerConn(nConn, sshServer.config)
 	if err != nil {
-		log.Error.Println(clientId, "Failed to handshake")
+		sshdServer.bruteforce <- models.MakeBruteforceAttack(ip, "handshake", "handshake", false)
+		log.Error.Println(clientId, "Failed to handshake", err)
 		return
 	}
 	// The incoming Request channel must be serviced.
