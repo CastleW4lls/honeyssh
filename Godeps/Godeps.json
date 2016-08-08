@@ -1,0 +1,28 @@
+{
+	"ImportPath": "github.com/sec51/honeyssh",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v62",
+	"Deps": [
+		{
+			"ImportPath": "github.com/astaxie/beego/config",
+			"Comment": "v1.6.1-5-g88c5dfa",
+			"Rev": "88c5dfa6ead42e624c2e7d9e04eab6cb2d07412a"
+		},
+		{
+			"ImportPath": "github.com/sec51/goconf",
+			"Rev": "7522ddf88206c98ee4ce560eaa99c54d1954f46b"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/curve25519",
+			"Rev": "b76c864ef1dca1d8f271f917c290cddcce3d9e0d"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ssh",
+			"Rev": "b76c864ef1dca1d8f271f917c290cddcce3d9e0d"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ssh/terminal",
+			"Rev": "b76c864ef1dca1d8f271f917c290cddcce3d9e0d"
+		}
+	]
+}
