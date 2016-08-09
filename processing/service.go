@@ -38,6 +38,8 @@ func processIp(attacks chan models.BruteforceAttack) {
 		params := url.Values{
 			"ip":                {bf.Ip},
 			"service":           {config.HONEYPOT_SERVICE},
+			"username":          {bf.User},
+			"password":          {bf.Password},
 			"type":              {"bruteforce"},
 			"honeypot_ip":       {config.HONEYPOT_IP},
 			"honeypot_location": {config.HONEYPOT_LOCATION},
